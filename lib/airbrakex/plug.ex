@@ -30,11 +30,25 @@ defmodule Airbrakex.Plug do
           super(conn, opts)
         rescue
           exception ->
+            conn = conn |> Plug.Conn.fetch_cookies |> Plug.Conn.fetch_query_params
+            headers = Enum.into(conn.req_headers, %{})
+
+            cxt = %{
+              url: "#{conn.scheme}://#{conn.host}:#{conn.port}#{conn.request_path}",
+              userIP: (conn.remote_ip |> Tuple.to_list() |> Enum.join(".")),
+              userAgent: headers["user-agent"],
+              cookies: conn.req_cookies
+            }
+            env = %{
+              headers: headers,
+              httpMethod: conn.method
+            }
+
             session = Map.get(conn.private, :plug_session)
 
             error = ExceptionParser.parse(exception)
 
-            Notifier.notify(error, params: conn.params, session: session)
+            Notifier.notify(error, params: conn.params, session: session, context: cxt, environment: env)
 
             reraise exception, System.stacktrace()
         end
