@@ -23,7 +23,7 @@ defmodule Airbrakex.Notifier do
         |> add(:session, Keyword.get(options, :session))
         |> add(:params, Keyword.get(options, :params))
         |> add(:environment, Keyword.get(options, :environment, %{}))
-        |> Poison.encode!()
+        |> Jason.encode!()
 
       post(url(), payload, @request_headers, http_options())
     end
@@ -36,8 +36,17 @@ defmodule Airbrakex.Notifier do
   defp add_error(payload, nil), do: payload
 
   defp add_error(payload, error) do
+    error = get_error_as_map(error)
+
     payload |> Map.put(:errors, [error])
   end
+
+  defp get_error_as_map(%{__struct__: _} = error) do
+    type = error_type(error)
+    error |> Map.from_struct() |> Map.put_new(:type, type)
+  end
+
+  defp get_error_as_map(error), do: error
 
   defp add_context(payload, nil) do
     payload |> Map.put(:context, %{environment: environment()})
@@ -72,8 +81,23 @@ defmodule Airbrakex.Notifier do
   end
 
   defp proceed?(ignore, _error) when is_nil(ignore), do: true
+  defp proceed?({module, function, []}, error), do: !apply(module, function, [error])
   defp proceed?(ignore, error) when is_function(ignore), do: !ignore.(error)
 
-  defp proceed?(ignore, error) when is_list(ignore),
-    do: !Enum.any?(ignore, fn el -> el == error.type end)
+  defp proceed?(ignore, error) when is_list(ignore) do
+    type = error_type(error)
+    !Enum.any?(ignore, &(ignore_type(&1) == type))
+  end
+
+  defp error_type(%{type: type}) when is_binary(type), do: type
+  defp error_type(%{type: type}) when is_atom(type), do: to_string(type)
+  defp error_type(%{__struct__: type}) when is_atom(type), do: to_string_type(type)
+  defp error_type(_), do: nil
+
+  defp ignore_type(type) when is_binary(type), do: type
+  defp ignore_type(type) when is_atom(type), do: to_string_type(type)
+
+  defp to_string_type(type) when is_atom(type) do
+    type |> to_string |> String.replace(~r/^Elixir\./, "")
+  end
 end
