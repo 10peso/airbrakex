@@ -50,7 +50,7 @@ defmodule Airbrakex.Plug do
 
             Notifier.notify(error, params: conn.params, session: session, context: cxt, environment: env)
 
-            reraise exception, System.stacktrace()
+            reraise exception, __STACKTRACE__
         end
       end
     end

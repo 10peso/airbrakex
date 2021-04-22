@@ -20,8 +20,6 @@ defmodule Airbrakex.ExceptionParserTest do
 
     backtrace_files = Enum.map(backtrace, fn entry -> entry[:file] end)
 
-    assert Enum.member?(backtrace_files, "(Elixir.IO) lib/io.ex")
-
     assert Enum.member?(
              backtrace_files,
              "(Elixir.Airbrakex.ExceptionParserTest) test/airbrakex/exception_parser_test.exs"
@@ -32,7 +30,6 @@ defmodule Airbrakex.ExceptionParserTest do
 
     backtrace_functions = Enum.map(backtrace, fn entry -> entry[:function] end)
 
-    assert Enum.member?(backtrace_functions, "inspect(\"test\", [], \"\")")
     assert Enum.member?(backtrace_functions, "test parses exception/1")
     assert Enum.member?(backtrace_functions, "exec_test/1")
     assert Enum.member?(backtrace_functions, "tc/1")

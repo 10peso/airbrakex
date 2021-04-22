@@ -124,7 +124,7 @@ defmodule Airbrakex.NotifierTest do
     Airbrakex.Notifier.notify(error)
   end
 
-  test "does not notify if error in ignore list", %{bypass: bypass} do
+  test "does not notify if error in ignore list" do
     Application.put_env(:airbrakex, :ignore, [SpecificError])
 
     error_to_ignore = fetch_error(fn -> raise SpecificError, "A type A error" end)
