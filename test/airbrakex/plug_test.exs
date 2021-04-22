@@ -35,7 +35,7 @@ defmodule Airbrakex.PlugTest do
       opts = [parsers: [Plug.Parsers.JSON], json_decoder: Jason]
       conn = Plug.Parsers.call(conn, Plug.Parsers.init(opts))
 
-      assert %{"context" => %{"url" => "http://www.example.com/hello"}} = conn.body_params
+      assert %{"context" => %{"url" => "http://www.example.com:80/hello"}} = conn.body_params
 
       Plug.Conn.resp(conn, 200, "")
     end)
